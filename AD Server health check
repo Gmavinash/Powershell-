@@ -1,0 +1,77 @@
+# Function to check if a service is running
+function CheckService {
+    param(
+        [string]$serviceName
+    )
+    $service = Get-Service -Name $serviceName
+    if ($service.Status -eq "Running") {
+        return "<span style='color:green;'>Running</span>"
+    } else {
+        return "<span style='color:red;'>Not Running</span>"
+    }
+}
+
+
+# Function to check replication status
+function CheckReplication {
+    $replication = Get-ADReplicationPartnerMetadata -Target * | Select-Object Server, LastReplicationResult, LastReplicationSuccess
+    $replicationHTML = "<table><tr><th>Server</th><th>Last Replication Result</th><th>Last Replication Success</th></tr>"
+    foreach ($partner in $replication) {
+        $statusColor = if ($partner.LastReplicationResult -gt 0) { "red" } else { "black" }
+        $replicationHTML += "<tr><td>$($partner.Server)</td><td><span style='color:$statusColor;'>$($partner.LastReplicationResult)</span></td><td>$($partner.LastReplicationSuccess)</td></tr>"
+    }
+    $replicationHTML += "</table>"
+    return $replicationHTML
+}
+
+
+
+
+# Generate HTML report
+$htmlReport = @"
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #007bff;
+  color: white;
+}
+</style>
+</head>
+<body>
+
+<h2>Active Directory Health Check Report</h2>
+
+<h3>Service Status</h3>
+<table>
+<tr><th>Service Name</th><th>Status</th></tr>
+<tr><td>ADWS</td><td>$(CheckService "ADWS")</td></tr>
+<tr><td>NTDS</td><td>$(CheckService "NTDS")</td></tr>
+<tr><td>KDC</td><td>$(CheckService "KDC")</td></tr>
+<tr><td>NetLogon</td><td>$(CheckService "NetLogon")</td></tr>
+<tr><td>DFS</td><td>$(CheckService "DFS")</td></tr>
+</table>
+
+<h3>Replication Status</h3>
+$(CheckReplication)
+
+</body>
+</html>
+"@
+
+# Output the HTML report to a file
+$htmlReport | Out-File -FilePath 'C:\Users\username\Desktop\30_jan_ADHealthCheckReport.html'
+
+Write-Host "Active Directory Health Check Report generated: ADHealthCheckReport.html"
