@@ -1,4 +1,4 @@
-$adgroups = Get-Content 'C:\Users\$$gumav\Desktop\adgroups.txt'
+$adgroups = Get-Content 'C:\Users\username\Desktop\adgroups.txt'
 
 foreach ($adgroup in $adgroups) {
     try {
@@ -6,7 +6,7 @@ foreach ($adgroup in $adgroups) {
         $members = Get-ADGroupMember -Identity $group -Recursive | Where-Object { $_.ObjectClass -eq 'user' }
 
         if ($members) {
-            $outputFileName = 'C:\Users\$$gumav\Desktop\Antaras' + ($group.Name -replace '[^\w\-]', '') + '.csv'
+            $outputFileName = 'C:\Users\username\Desktop\Antaras' + ($group.Name -replace '[^\w\-]', '') + '.csv'
 
             $members | Get-ADUser -Properties SamAccountName,Department,countryCode,c,co,Enabled,displayname,EmailAddress,PasswordExpired,PasswordLastSet,LastLogonDate,Manager |
                 Select-Object SamAccountName,Department,countryCode,c,co,Enabled,displayname,EmailAddress,PasswordExpired,PasswordLastSet,LastLogonDate,Manager |
