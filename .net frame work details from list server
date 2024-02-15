@@ -1,0 +1,30 @@
+$serverList = Get-Content 'C:\Users\$$gumav\Desktop\Server.txt' # Replace with your server names
+
+$htmlOutput = "<html><head><style>table { border-collapse: collapse; } th, td { border: 1px solid black; padding: 8px; }</style></head><body><table><tr><th>Server Name</th><th>PSChildName</th><th>Version</th></tr>"
+
+foreach ($server in $serverList) {
+    Write-Host "Checking .NET Framework version on $server..."
+    try {
+        $session = New-PSSession -ComputerName $server -ErrorAction Stop
+        $results = Invoke-Command -Session $session -ScriptBlock {
+            Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP' -Recurse |
+                Get-ItemProperty -Name Version -ErrorAction SilentlyContinue |
+                Where-Object { $_.PSChildName -match '^(?!S)\p{L}'} |
+                Where-Object { $_.PSChildName -eq 'Full'} |
+                Select-Object PSChildName, Version
+        }
+        Remove-PSSession -Session $session
+        foreach ($result in $results) {
+            $version = [Version]$result.Version
+            $versionString = $result.Version
+            $color = if ($version -ge [Version]"4.7") { "green" } else { "red" }
+            $htmlOutput += "<tr><td>$server</td><td>$($result.PSChildName)</td><td style='background-color: $color;'>$versionString</td></tr>"
+        }
+    } catch {
+        $errorMessage = $_.Exception.Message
+        $htmlOutput += "<tr><td>$server</td><td>Error</td><td>$errorMessage</td></tr>"
+    }
+}
+
+$htmlOutput += "</table></body></html>"
+$htmlOutput | Out-File 'C:\Users\$$gumav\Desktop\ServerVersions.html'
