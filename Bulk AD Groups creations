@@ -1,0 +1,29 @@
+# Import the Active Directory module
+Import-Module ActiveDirectory
+
+# Path to the CSV file containing group details
+$csvPath = 'C:\Users\$$gumav\Desktop\test.csv'
+
+# Import CSV file
+$groups = Import-Csv -Path $csvPath
+
+# Loop through each row in the CSV
+foreach ($group in $groups) {
+    # Extract group details from the CSV
+    $name = $group.Name
+    $displayName = $group.DisplayName
+    $groupDescription =$group.Description
+    $ou = $group.OU
+    $groupCategory = $group.GroupCategory
+    $groupScope = $group.GroupScope
+    
+    # Create a new AD group
+    New-ADGroup -Name $name -DisplayName $displayName -Description $groupDescription  -Path $ou -GroupCategory $groupCategory -GroupScope $groupScope
+}
+
+<#
+Format need to save in csv file 
+Name,DisplayName,Description,OU,GroupCategory,GroupScope
+Group1,Group 1,yourwish,OU=Groups,Security,Global
+Group2,Group 2,yourwish,OU=Groups,Security,DomainLocal 
+#>
