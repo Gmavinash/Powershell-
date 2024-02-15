@@ -1,0 +1,64 @@
+$ReferenceBootTime = Read-Host "Enter the reference boot time (MM/DD/YYYY HH:MM:SS)"
+
+Import-Module ActiveDirectory
+$Servers = Get-Content 'C:\Users\user\Desktop\Server.txt'
+
+# Get the domain FQDN
+$Domain = (Get-ADDomain).DNSRoot
+
+# Start building HTML content
+$htmlContent = "<!DOCTYPE html>"
+$htmlContent += "<html><head><style>"
+$htmlContent += "table {font-family: Arial, sans-serif; border-collapse: collapse; width: 100%;}"
+$htmlContent += "td, th {border: 1px solid #dddddd; text-align: left; padding: 8px;}"
+$htmlContent += "th {background-color: #f2f2f2;}"
+$htmlContent += "</style></head><body>"
+
+$htmlContent += "<h2>Servers HotFix and Boot Time Information - Domain: $Domain</h2>"
+$htmlContent += "<table>"
+$htmlContent += "<tr><th>Serial No.</th><th>Server Name</th><th>HotFix Information</th><th>Last Boot Time</th><th>OS Caption</th></tr>"
+
+$serialNo = 1
+Foreach ($Server in $Servers) {
+
+    $HotFixes = Get-HotFix -ComputerName $Server | Sort-Object InstalledOn -Descending | Select-Object -First 4
+    $BootInfo = Get-CimInstance -ComputerName $Server -ClassName Win32_OperatingSystem | Select-Object csname, lastbootuptime, caption | Sort-Object lastbootuptime
+
+    # Determine OS version and set color
+    $osCaption = $BootInfo.caption
+    $osColor = if ($osCaption -match '2016|2019|2022') {"green"} else {"black"}
+
+    # Check if the server has been restarted after installing the latest hotfix
+    $latestHotFixDate = $HotFixes[0].InstalledOn
+    $bootTime = Get-Date $BootInfo.lastbootuptime
+    $referenceTime = Get-Date $ReferenceBootTime
+
+    if ($latestHotFixDate -ge $referenceTime -and $bootTime -ge $referenceTime) {
+        $bootTimeColor = "green"
+    } else {
+        $bootTimeColor = "red"
+    }
+
+    # Adding a row for each server's information
+    $htmlContent += "<tr>"
+    $htmlContent += "<td>$serialNo</td>"
+    $htmlContent += "<td>$Server</td>"
+    $htmlContent += "<td><ul>"
+    foreach ($HotFix in $HotFixes) {
+        $htmlContent += "<li>$($HotFix.HotFixID) - $($HotFix.InstalledOn)</li>"
+    }
+    $htmlContent += "</ul></td>"
+    $htmlContent += "<td style='background-color: $bootTimeColor;'>$($BootInfo.lastbootuptime)</td>"
+    $htmlContent += "<td style='color: $osColor;'>$osCaption</td>"
+    $htmlContent += "</tr>"
+
+    $serialNo++
+}
+
+$htmlContent += "</table></body></html>"
+
+# Writing the HTML content to a file
+$htmlContent | Out-File 'C:\Users\user\Desktop\Servers_Info.html'
+
+# Displaying a message to confirm the generation of HTML file
+Write-Host "HTML file 'Servers_Info.html' has been generated successfully."
