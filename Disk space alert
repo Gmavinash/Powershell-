@@ -1,0 +1,46 @@
+# Define list of servers
+$servers = @("server1", "server2", "server3")
+
+# Create an array to store server information
+$serverInfo = @()
+
+# Iterate through each server
+foreach ($server in $servers) {
+    # Get disk space information
+    $diskInfo = Get-WmiObject Win32_LogicalDisk -ComputerName $server | Where-Object { $_.DriveType -eq 3 }
+
+    # Iterate through each disk
+    foreach ($disk in $diskInfo) {
+        $freeSpaceGB = [math]::Round($disk.FreeSpace / 1GB, 2)
+        $totalSpaceGB = [math]::Round($disk.Size / 1GB, 2)
+        $freeSpacePercentage = [math]::Round(($freeSpaceGB / $totalSpaceGB) * 100, 2)
+        
+        # Check if free space is less than 25%
+        $rowColor = ""
+        if ($freeSpacePercentage -lt 25) {
+            $rowColor = "red"
+        }
+        
+        # Add server information to array
+        $serverInfo += [PSCustomObject]@{
+            ServerName = $server
+            Drive = $disk.DeviceID
+            TotalSpaceGB = $totalSpaceGB
+            FreeSpaceGB = $freeSpaceGB
+            FreeSpacePercentage = $freeSpacePercentage
+            RowColor = $rowColor
+        }
+    }
+}
+
+# Generate HTML report
+$html = $serverInfo | ConvertTo-Html -Property ServerName, Drive, TotalSpaceGB, FreeSpaceGB, FreeSpacePercentage -As Table -PreContent "<h2>Server Disk Space Report</h2>" -PostContent "<p>Generated on $(Get-Date)</p>" -Fragment
+
+# Apply row color formatting
+$html = $html -replace '<td>(\d+\.\d+)</td><td>(\d+\.\d+)</td><td>(\d+\.\d+)</td><td>(\d+\.\d+)</td>', '<td bgcolor="red">$1</td><td bgcolor="red">$2</td><td bgcolor="red">$3</td><td bgcolor="red">$4</td>' -replace '<td>red</td>', '<td bgcolor="red">red</td>'
+
+# Save HTML report to a file
+$html | Out-File -FilePath "DiskSpaceReport.html"
+
+Write-Host "Disk space report generated: DiskSpaceReport.html"
+
