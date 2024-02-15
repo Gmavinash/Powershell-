@@ -1,0 +1,6 @@
+Get-Module ActiveDirectory,GroupPolicy
+$OU = “OU=Site Administrators,OU=FRMON,OU=Leo,DC=global,DC=leo-group,DC=net”
+Get-ADOrganizationalUnit $OU
+$LinkedGPOs = Get-ADOrganizationalUnit $OU | Select-object -ExpandProperty LinkedGroupPolicyObjects
+$LinkedGPOGUIDs = $LinkedGPOs | ForEach-object{$_.Substring(4,36)}
+$LinkedGPOGUIDs | ForEach-object {Get-GPO -Guid $_ | Select-object Displayname }
