@@ -1,0 +1,21 @@
+$adgroups = Get-Content 'C:\Users\$$gumav\Desktop\adgroups.txt'
+
+foreach ($adgroup in $adgroups) {
+    try {
+        $group = Get-ADGroup $adgroup -ErrorAction Stop
+        $members = Get-ADGroupMember -Identity $group -Recursive | Where-Object { $_.ObjectClass -eq 'user' }
+
+        if ($members) {
+            $outputFileName = 'C:\Users\$$gumav\Desktop\Antaras' + ($group.Name -replace '[^\w\-]', '') + '.csv'
+
+            $members | Get-ADUser -Properties SamAccountName,Department,countryCode,c,co,Enabled,displayname,EmailAddress,PasswordExpired,PasswordLastSet,LastLogonDate,Manager |
+                Select-Object SamAccountName,Department,countryCode,c,co,Enabled,displayname,EmailAddress,PasswordExpired,PasswordLastSet,LastLogonDate,Manager |
+                Export-Csv -Path $outputFileName -NoTypeInformation -Encoding UTF8
+        } else {
+            Write-Host "No users found in group: $($group.Name)"
+        }
+    } catch {
+        Write-Host "Error occurred while processing group: $($group.Name). $_"
+    }
+}
+
