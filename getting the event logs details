@@ -1,0 +1,46 @@
+
+                clear-host
+                ##########DISPLAY ALL LOGNAME########################
+                $log_result = (get-eventlog -list).log 
+                write-host "`n LOG NAMES`n =============" -f Magenta
+                $log_result
+                write-host "$("*"*100)" -f Yellow -b red
+                ################################################
+                #ask the runtime input from the user for the logname parameter in the get-eventlog
+                [string]$log_name = read-host -Prompt "Enter the logname from the above list"
+                ################################################
+
+                #take the start_date and end_date variable values to filter the given logname logs
+                [datetime]$start_date = read-host -Prompt "Enter the start date[Ex: 14 Jan 2023 ]" #14 jan 2023
+                [datetime]$end_date = read-host -Prompt "Enter the end date" #10 oct 2023
+                 [string]$username = read-host -Prompt "Enter the username" 
+
+                $new_date_for_end_date = ($end_date).Add(1)
+                write-host "$("*"*100)`nValid Entrytypes" -f yellow -b red
+                "The acceptable values for this parameter are:
+
+                   1 - Error
+                   2 - Information
+                   3 - FailureAudit
+                   4 - SuccessAudit
+                   5 - Warning
+                   "
+                write-host "$("*"*100)" -f Yellow -b red
+                [string]$entry_type = read-host -Prompt "Enter a Valid entrytype"
+                                                                                 #14 Jan 2023 00:00:00                 #10 oct 2023 00:00:00         #10 oct 2023 23:59:59     
+                $r3 = Get-eventlog -logname $log_name |`
+                      where-object -f { `
+                      $_.TimeGenerated -ge $start_date               -and `
+                      $_.TimeGenerated   -lt $new_date_for_end_date  -and `
+                      $_.EntryType -eq $entry_type -and `
+                     #$_.EventID -eq '4771' -and `
+                    # $_.EventID -eq '4740'  -and `
+                     # $_.EventID -eq '4647'  -and `
+                      $_.Message -like "*$username*"
+                            }
+                                                                                                #-lt    11 oct 2023 00:00:00              
+                                                                                                #---> 10 oct 2023 23:59:59
+                #Printing on the screen
+                $r3 | Select-Object -Property Index,TimeGenerated,EntryType,Message | sort-object -Property Index | format-list
+
+                write-host "No. of Objects : b/w this two time stamps`nstart:$start_date ----end $end_date`n-----> is $($r3.count)" -f Yellow
