@@ -2,7 +2,7 @@
 Import-Module ActiveDirectory
 
 # Path to the CSV file containing group details
-$csvPath = 'C:\Users\$$gumav\Desktop\test.csv'
+$csvPath = 'C:\Users\username\Desktop\test.csv'
 
 # Import CSV file
 $groups = Import-Csv -Path $csvPath
