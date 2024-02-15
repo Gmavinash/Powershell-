@@ -1,0 +1,19 @@
+# Define the username of the locked account
+$lockedAccount = get-content c:desktop/users/
+
+# Loop indefinitely to unlock the account every minute
+while ($true) {
+    # Check if the account is locked
+    $account = Get-ADUser -Identity $lockedAccount -Properties LockedOut
+
+    if ($account.LockedOut) {
+        # Unlock the account
+        Unlock-ADAccount -Identity $lockedAccount
+        Write-Output "The account $lockedAccount has been unlocked at $(Get-Date)"
+    } else {
+        Write-Output "The account $lockedAccount is already unlocked at $(Get-Date)"
+    }
+
+    # Wait for 60 seconds before checking again
+    Start-Sleep -Seconds 60
+}
