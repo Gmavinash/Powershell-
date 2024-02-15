@@ -1,0 +1,2 @@
+$a = Get-ADUser -filter * -Properties * | ? {$_.enabled -eq 'true'} | select name,enabled,UserPrincipalName 
+$a | Export-Csv 'C:\Users\username\Desktop\leousers.csv' -NoTypeInformation -Encoding UTF8
