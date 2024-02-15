@@ -1,5 +1,5 @@
 # Define list of servers
-$servers = @("server1", "server2", "server3")
+$servers = get-content 'c:/users/username/deskto/file name '  # save servers in the list 
 
 # Create an array to store server information
 $serverInfo = @()
