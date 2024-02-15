@@ -1,0 +1,2 @@
+Get-Service | ? -FilterScript {$_.starttype -eq 'automatic'} | sort status >> C:\Temp\service_%date%.csv
+Get-Service | ? -FilterScript {$_.Status -eq 'running'}| sort status >> C:\Temp\services_running.csv
