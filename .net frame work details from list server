@@ -1,4 +1,4 @@
-$serverList = Get-Content 'C:\Users\$$gumav\Desktop\Server.txt' # Replace with your server names
+$serverList = Get-Content 'C:\Users\username\Desktop\Server.txt' # Replace with your server names
 
 $htmlOutput = "<html><head><style>table { border-collapse: collapse; } th, td { border: 1px solid black; padding: 8px; }</style></head><body><table><tr><th>Server Name</th><th>PSChildName</th><th>Version</th></tr>"
 
@@ -27,4 +27,4 @@ foreach ($server in $serverList) {
 }
 
 $htmlOutput += "</table></body></html>"
-$htmlOutput | Out-File 'C:\Users\$$gumav\Desktop\ServerVersions.html'
+$htmlOutput | Out-File 'C:\Users\username\Desktop\ServerVersions.html'
