@@ -1,0 +1,53 @@
+# threshold values
+$warningThreshold = 20
+$criticalThreshold = 10
+
+# Define email parameters
+$emailFrom = "admin@example.com"
+$emailTo = "recipient@example.com"
+$smtpServer = "smtp.example.com"
+$subject = "Low Disk Space Warning"
+
+# Define the list of servers to check
+$serverList = Get-Content -Path "C:\PSscripts\ServerList.txt"
+
+# Check disk space usage for each server
+$emailBody = "The following servers have low disk space:\n\n"
+$hasLowDiskSpace = $false
+$reportBody = "<html><body><table border='1'><tr><th>Server</th><th>Drive</th><th>Free Space</th></tr>"
+
+foreach ($server in $serverList) {
+    $driveInfo = Get-WmiObject -Class Win32_LogicalDisk -Filter "DriveType=3" -ComputerName $server
+
+    foreach ($drive in $driveInfo) {
+        $freeSpacePercent = [math]::Round(($drive.FreeSpace / $drive.Size) * 100, 2)
+
+        if ($freeSpacePercent -lt $criticalThreshold) {
+            $color = "Red"
+            $emailBody += "Server: $server, Drive: $($drive.DeviceID), Free Space: $freeSpacePercent%`n"
+            $reportBody += "<tr><td>$server</td><td>$($drive.DeviceID)</td><td>$freeSpacePercent%</td></tr>"
+            $hasLowDiskSpace = $true
+        }
+        elseif ($freeSpacePercent -lt $warningThreshold) {
+            $color = "Yellow"
+            $emailBody += "Server: $server, Drive: $($drive.DeviceID), Free Space: $freeSpacePercent%`n"
+            $reportBody += "<tr><td>$server</td><td>$($drive.DeviceID)</td><td>$freeSpacePercent%</td></tr>"
+            $hasLowDiskSpace = $true
+        }
+    }
+}
+
+$reportBody += "</table></body></html>"
+
+# Save local copy of the report
+$reportBody | Out-File -FilePath "C:\PSscripts\DiskSpaceReport.html"
+
+# Send email if any server has low disk space
+if ($hasLowDiskSpace) {
+    $emailBody = "Subject: $subject`n`n$emailBody"
+    $message = New-Object System.Net.Mail.MailMessage $emailFrom, $emailTo
+    $message.Body = $emailBody
+    $message.IsBodyHtml = $true
+    $smtpClient = New-Object System.Net.Mail.SmtpClient($smtpServer)
+    $smtpClient.Send($message)
+}
