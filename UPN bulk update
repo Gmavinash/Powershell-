@@ -1,0 +1,35 @@
+Import-Module ActiveDirectory
+$oldSuffix "test.local" # need to change as per thr requirement 
+$newuffix = "testcom"
+
+# Initialize report
+$report = @()
+
+# Get list of users from file
+Get-Content "C:\files\users.txt" | ForEach-Object {
+    $user = Get-ADUser -Identity $_ -Properties UserPrincipalName, EmailAddress
+
+    # Update UPN
+    $newUpn = $user.UserPrincipalName.Replace($oldSuffix, $newSuffix)
+    $user | Set-ADUser -UserPrincipalName $newUpn
+
+    # Add user to report
+    $report += [PSCustomObject]@{
+        UserID = $user.SamAccountName
+        UPN = if ($user.UserPrincipalName -like "*$newSuffix") { $user.UserPrincipalName } else { "$user.UserPrincipalName (NOT UPDATED)" }
+        EmailAddress = $user.EmailAddress
+        Color = if ($user.UserPrincipalName -like "*$newSuffix") { "Green" } else { "Red" }
+    }
+}
+
+# Generate HTML report
+$htmlReport = "<html><body><table border='1'><tr><th>User ID</th><th>UPN</th><th>Email Address</th><th>Status</th></tr>"
+
+foreach ($user in $report) {
+    $htmlReport += "<tr><td>$($user.UserID)</td><td>$($user.UPN)</td><td>$($user.EmailAddress)</td><td><font color='$($user.Color)'><b>$($user.Color)</b></font></td></tr>"
+}
+
+$htmlReport += "</table></body></html>"
+
+# Save report to file
+$htmlReport | Out-File -FilePath "C:\files\UserUPNReport.html"
