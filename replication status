@@ -1,0 +1,21 @@
+1) Memory Space
+2) Drive Space -----> Get-volume 
+3) Replication Status  
+    repadmin /replsum localhost
+    repadmin /showrepl
+    repadmin /replsum
+    repadmin /kcc
+    repadmin /showreps
+net share
+3) DNS zone opening or not
+
+Gpresult /h c:\temp\report_working.html
+
+
+tracert server name
+
+ipconfig /
+
+Repadmin /showrepl * /csv > C:\%computername%_showreplnew.csv 
+
+Get-ADDomainController -Filter * | select Name, OperatingSystem, IPv4Address, Site
