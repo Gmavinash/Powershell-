@@ -1,0 +1,35 @@
+# Import Active Directory module (Ensure the module is installed)
+Import-Module ActiveDirectory
+
+# Define input and output file paths
+$InputFile = "OUInput.txt"  # Text file containing the Distinguished Name (DN) of the target OU
+$OutputFile = "UsersFromOU.csv"  # CSV file to save the output
+
+# Read the OU Distinguished Name (DN) from the input file
+if (Test-Path $InputFile) {
+    $OU = Get-Content -Path $InputFile
+    if ([string]::IsNullOrWhiteSpace($OU)) {
+        Write-Error "Input file is empty. Please provide the OU DN."
+        exit
+    }
+} else {
+    Write-Error "Input file not found. Please create a file named 'OUInput.txt' with the target OU DN."
+    exit
+}
+
+# Fetch users from the specified OU
+try {
+    $Users = Get-ADUser -Filter * -SearchBase $OU -Properties DisplayName, EmailAddress, SamAccountName | 
+             Select-Object DisplayName, EmailAddress, SamAccountName
+             
+    if ($Users.Count -eq 0) {
+        Write-Host "No users found in the specified OU: $OU"
+        exit
+    }
+
+    # Export the users to a CSV file
+    $Users | Export-Csv -Path $OutputFile -NoTypeInformation -Encoding UTF8
+    Write-Host "User list successfully exported to $OutputFile"
+} catch {
+    Write-Error "An error occurred while fetching users: $_"
+}
