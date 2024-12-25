@@ -1,0 +1,26 @@
+# Read usernames from input text file
+$usernames = Get-Content 'C:\Users\username\Desktop\users_employee.txt'
+
+# Initialize an array to store user details
+$userDetails = @()
+
+foreach ($username in $usernames) {
+    # Get the user details from Active Directory
+    $user = Get-ADUser -Filter {SamAccountName -eq $username} -Property Name, Enabled, UserPrincipalName, Manager
+
+    if ($user) {
+        # Add user details to the array
+        $userDetails += $user | Select-Object Name, Enabled, UserPrincipalName, Manager
+    } else {
+        # Add a "User not found" entry to the array
+        $userDetails += [PSCustomObject]@{
+            Name = $username
+            Enabled = 'N/A'
+            UserPrincipalName = 'User not found'
+            Manager = 'N/A'
+        }
+    }
+}
+
+# Export the user details to a text file
+$userDetails | Format-Table -AutoSize | Out-File 'C:\Users\username\Desktop\users.csv'
