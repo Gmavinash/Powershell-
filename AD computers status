@@ -1,0 +1,26 @@
+# Read computer names from input text file
+$computerNames = Get-Content 'C:\Users\username\Desktop\users_employee.txt'
+
+# Initialize an array to store computer details
+$computerDetails = @()
+
+foreach ($computerName in $computerNames) {
+    # Get the computer details from Active Directory
+    $computer = Get-ADComputer -Filter {Name -eq $computerName} -Property Name, Enabled, OperatingSystem, LastLogonDate
+
+    if ($computer) {
+        # Add computer details to the array
+        $computerDetails += $computer | Select-Object Name, Enabled, OperatingSystem, LastLogonDate
+    } else {
+        # Add a "Computer not found" entry to the array
+        $computerDetails += [PSCustomObject]@{
+            Name = $computerName
+            Enabled = 'N/A'
+            OperatingSystem = 'Computer not found'
+            LastLogonDate = 'N/A'
+        }
+    }
+}
+
+# Export the computer details to a text file
+$computerDetails | Format-Table -AutoSize | Out-File 'C:\Users\username\Desktop\TASK003057811.csv'
