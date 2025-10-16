@@ -1,0 +1,68 @@
+# Connect to Microsoft Graph with required scope
+Connect-MgGraph -Scopes 'Application.Read.All'
+
+# Initialize log array
+$Logs = @()
+$Now = Get-Date
+
+# Retrieve all applications with keyCredentials and passwordCredentials
+$Applications = Get-MgApplication -All -Property "id,displayName,appId,keyCredentials,passwordCredentials"
+Write-Host "Total applications retrieved: $($Applications.Count)" -ForegroundColor Cyan
+
+foreach ($App in $Applications) {
+    $AppName = $App.DisplayName
+    $ApplID = $App.AppId
+
+    # Process KeyCredentials (certificates)
+    foreach ($Cert in $App.KeyCredentials) {
+        $EndDate = $Cert.EndDateTime
+        $RemainingDaysCount = ($EndDate - $Now).Days
+
+        $Logs += [PSCustomObject]@{
+            'Application Name'       = $AppName
+            'Application ID'         = $ApplID
+            'Credential Type'        = "Certificate"
+            'Credential Usage'       = $Cert.Usage
+            'Credential Name'        = $Cert.DisplayName
+            'Start Date'             = $Cert.StartDateTime
+            'End Date'               = $EndDate
+            'Days Until Expiration'  = $RemainingDaysCount
+        }
+    }
+
+    # Process PasswordCredentials (client secrets)
+    foreach ($Secret in $App.PasswordCredentials) {
+        $EndDate = $Secret.EndDateTime
+        $RemainingDaysCount = ($EndDate - $Now).Days
+
+        $Logs += [PSCustomObject]@{
+            'Application Name'       = $AppName
+            'Application ID'         = $ApplID
+            'Credential Type'        = "Client Secret"
+            'Credential Usage'       = "N/A"
+            'Credential Name'        = $Secret.DisplayName
+            'Start Date'             = $Secret.StartDateTime
+            'End Date'               = $EndDate
+            'Days Until Expiration'  = $RemainingDaysCount
+        }
+    }
+
+    # If no credentials at all, log the app
+    if ($App.KeyCredentials.Count -eq 0 -and $App.PasswordCredentials.Count -eq 0) {
+        $Logs += [PSCustomObject]@{
+            'Application Name'       = $AppName
+            'Application ID'         = $ApplID
+            'Credential Type'        = 'None'
+            'Credential Usage'       = 'N/A'
+            'Credential Name'        = 'N/A'
+            'Start Date'             = 'N/A'
+            'End Date'               = 'N/A'
+            'Days Until Expiration'  = 'N/A'
+        }
+    }
+}
+
+# Export results to CSV
+$Path = 'C:\Users\X998ASW\Downloads\AAD_Applications_Credentials_Report.csv'
+$Logs | Export-Csv -Path $Path -NoTypeInformation -Encoding UTF8
+Write-Host "✅ Export completed successfully! File saved to: $Path" -ForegroundColor Green
