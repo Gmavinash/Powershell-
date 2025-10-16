@@ -1,0 +1,50 @@
+# Connect to Azure AD
+Connect-AzureAD
+
+# Set expiration threshold (30 days from today)
+$ThresholdDate = (Get-Date).AddDays(30)
+$Results = @()
+
+# Get all service principals with specific SSO tags
+$ServicePrincipals = Get-AzureADServicePrincipal -All $true | Where-Object {
+    $_.Tags -contains "WindowsAzureActiveDirectoryGalleryApplicationNonPrimaryV1" -or
+    $_.Tags -contains "WindowsAzureActiveDirectoryCustomSingleSignOnApplication"
+}
+
+foreach ($sp in $ServicePrincipals) {
+    $AppId = $sp.AppId
+    $DisplayName = $sp.DisplayName
+    $PasswordCreds = $sp.PasswordCredentials
+
+    foreach ($cred in $PasswordCreds) {
+        if ($cred.EndDate -lt $ThresholdDate) {
+            $RemainingDays = ($cred.EndDate - (Get-Date)).Days
+
+            # Get application owners
+            $Owners = Get-AzureADServicePrincipalOwner -ObjectId $sp.ObjectId | Select-Object -ExpandProperty UserPrincipalName
+            $OwnerList = if ($Owners) { $Owners -join '; ' } else { 'N/A' }
+
+            # Add to results
+            $Results += [PSCustomObject]@{
+                'Application Name'       = $DisplayName
+                'Application ID'         = $AppId
+                'Credential Type'        = 'Client Secret'
+                'Credential Usage'       = 'N/A'
+                'Credential Name'        = $cred.CustomKeyIdentifier
+                'Start Date'             = $cred.StartDate
+                'End Date'               = $cred.EndDate
+                'Days Until Expiration'  = $RemainingDays
+                'Application Owner(s)'   = $OwnerList
+            }
+        }
+    }
+}
+
+# Export results to CSV
+$Path = 'C:\Users\username\Downloads\Expiring_SSO_Apps_Report_New_1258.csv'
+$Results | Export-Csv -Path $Path -NoTypeInformation -Encoding UTF8
+Write-Host "✅ Report exported to: $Path" -ForegroundColor Green
+
+
+
+https://github.com/madic-creates/AzureAD-ExpirationReminder/blob/main/AzureAd-Entries.ps1
