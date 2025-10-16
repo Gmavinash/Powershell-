@@ -1,0 +1,83 @@
+# Load Excel COM object
+$excel    = New-Object -ComObject Excel.Application
+$workbook = $excel.Workbooks.Open('C:\Users\username\OneDrive - The Home Depot\Documents\Avinash_test_2.xlsx')
+$sheet    = $workbook.Sheets.Item(1)
+
+# Default CC address
+$defaultCc = 'IAM_SSO_ALL@homedepot.com'
+
+# Count rows
+$rowCount = $sheet.UsedRange.Rows.Count
+
+# Create Outlook COM object once
+$outlook = New-Object -ComObject Outlook.Application
+
+# Counter for successful emails
+$emailSentCount = 0
+
+for ($i = 2; $i -le $rowCount; $i++) {
+    $clientId        = $sheet.Cells.Item($i, 1).Text
+    $expiryDate      = $sheet.Cells.Item($i, 2).Text
+    $applicationname = $sheet.Cells.Item($i, 3).Text.Trim()
+    $ownerEmailsRaw  = $sheet.Cells.Item($i, 4).Text
+
+    # Check if Client ID is empty
+    if ([string]::IsNullOrWhiteSpace($clientId)) {
+        Write-Host "❌ Empty Client ID found at row $i. Stopping execution."
+        Write-Host "✅ Emails sent before stopping: $emailSentCount"
+        break
+    }
+
+    # Combine all owner emails into one string
+    $ownerEmails = ($ownerEmailsRaw -split ',') | ForEach-Object { $_.Trim() }
+    $toAddresses = $ownerEmails -join ';'
+
+    $subject = "Action Required: Entra App Registration Credential Expiry for Application $applicationname Expiry on $expiryDate"
+    $body    = @"
+Dear Application Owner,
+
+Application (Client) ID: $clientId
+
+This is to inform you regarding the expiring credentials for registration (OAuth/OIDC, Prod or QA). We now have a self-service SSO Portal, where you can claim your existing registration and directly update your credentials as needed.
+
+Kindly use the following resources:
+
+• Link to portal (must be on network/vpn): https://galaxy.homedepot.com/sso/
+
+Link to documentation (Requires GitHub access):
+
+• For claiming your registration: https://docs.identity.homedepot.com/docs/guides/sso/claim/claim-entra  
+• For promoting to production: https://docs.identity.homedepot.com/docs/guides/sso/editing/entraid/edit-oauth
+
+Note: According to the ownership records maintained within the SSO Azure Platform,you are listed as the designated application owner.Therefore,we are formally reaching out to you to initiate the required actions or provide relevant guidance as appropriate.  
+
+If you have any questions or would like to provide feedback on the portal experience, please refer to the Slack channel #iam-sso-portal.
+
+Kindly acknowledge receipt of this email. Should you have further questions or require any additional clarification, please do not hesitate to contact us.
+
+
+Thanks and Regards,
+G M Avinash,
+
+
+"@
+
+    # Compose and send mail once per application
+    $mail         = $outlook.CreateItem(0)
+    $mail.To      = $toAddresses
+    $mail.CC      = $defaultCc
+    $mail.Subject = $subject
+    $mail.Body    = $body
+    $mail.Send()
+
+    # Increment counter
+    $emailSentCount++
+
+    # Optional delay
+    Start-Sleep -Seconds 3
+}
+
+# Cleanup
+$workbook.Close($false)
+$excel.Quit()
+[System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel)
