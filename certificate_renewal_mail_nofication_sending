@@ -42,16 +42,10 @@ This is to inform you regarding the expiring credentials for registration (OAuth
 
 Kindly use the following resources:
 
-• Link to portal (must be on network/vpn): https://galaxy.homedepot.com/sso/
-
-Link to documentation (Requires GitHub access):
-
-• For claiming your registration: https://docs.identity.homedepot.com/docs/guides/sso/claim/claim-entra  
-• For promoting to production: https://docs.identity.homedepot.com/docs/guides/sso/editing/entraid/edit-oauth
 
 Note: According to the ownership records maintained within the SSO Azure Platform,you are listed as the designated application owner.Therefore,we are formally reaching out to you to initiate the required actions or provide relevant guidance as appropriate.  
 
-If you have any questions or would like to provide feedback on the portal experience, please refer to the Slack channel #iam-sso-portal.
+If you have any questions or would like to provide feedback on the portal experience.
 
 Kindly acknowledge receipt of this email. Should you have further questions or require any additional clarification, please do not hesitate to contact us.
 
