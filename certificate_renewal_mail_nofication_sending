@@ -4,7 +4,7 @@ $workbook = $excel.Workbooks.Open('C:\Users\username\OneDrive - The Home Depot\D
 $sheet    = $workbook.Sheets.Item(1)
 
 # Default CC address
-$defaultCc = 'IAM_SSO_ALL@homedepot.com'
+$defaultCc = ''
 
 # Count rows
 $rowCount = $sheet.UsedRange.Rows.Count
